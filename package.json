@@ -3,12 +3,26 @@
   "version": "1.0.0",
   "description": "Roundpit events for Eleventy 3 sites: one page per event, live event lists, event data.",
   "main": "index.js",
-  "files": ["index.js", "data.js", "html.js", "rnd.js", "rnd.css", "README.md", "CHANGELOG.md"],
+  "files": [
+    "index.js",
+    "data.js",
+    "html.js",
+    "rnd.js",
+    "rnd.css",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "example": "eleventy --serve --config=example/eleventy.config.js"
   },
-  "engines": { "node": ">=18" },
-  "peerDependencies": { "@11ty/eleventy": ">=3.0.0" },
-  "devDependencies": { "@11ty/eleventy": "^3.1.6" },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@11ty/eleventy": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.6"
+  },
   "license": "MIT"
 }

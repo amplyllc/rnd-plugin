@@ -117,6 +117,7 @@ module.exports = async function loadEvents(cfg) {
     .sort((a, b) => Date.parse(a.item.starts_at) - Date.parse(b.item.starts_at))
 
   const pages = Object.fromEntries(entries.map(({ item, path }) => [item.id, `/${path}/`]))
+  console.log(`[rnd] ${entries.length} event page(s) from ${cfg.workspaces.length} workspace(s), ${cfg.events.length} event id(s) via ${cfg.api}`)
 
   return entries.map(({ item, path }) => {
     const meta = item.metadata || {}

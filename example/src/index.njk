@@ -1,0 +1,18 @@
+---
+layout: layouts/base.njk
+title: roundpit-rnd example
+---
+{% macro card(e) %}
+<a class="example-card" href="{{ e.href }}" data-rnd-id="{{ e.id }}" data-rnd-updated="{{ e.updated_at }}" data-rnd-over="{{ e.overAt }}" data-rnd-attr="href:href">
+  <strong class="example-card__title" data-rnd="title">{{ e.title }}</strong>
+  <span class="example-card__when" data-rnd="dateLabel">{{ e.dateLabel }}</span>
+  {% if e.purpose %}<span class="example-card__tag" data-rnd="purpose" data-rnd-if="purpose">{{ e.purpose }}</span>{% endif %}
+</a>
+{% endmacro %}
+
+<h1 class="example-title">Upcoming events</h1>
+{% set list = eventPages | selectattr("upcoming") %}
+<div class="example-list" data-rnd-list="10">
+  {% for e in list %}{{ card(e) }}{% endfor %}
+  <template data-rnd-item>{{ card(rnd.placeholder) }}</template>
+</div>

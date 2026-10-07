@@ -1,51 +1,27 @@
+/* Every --rnd-* custom property is declared here; components only read them.
+   The wrapper carries the site theme (the plugin's inline style beats these defaults) and the
+   light card palette. The hero re-declares only its dark surfaces: re-declaring tint or accent
+   there would shadow the wrapper's inline theme. */
 .rnd-event-page {
-  --rnd-tint: #1a1a2e;
+  --rnd-tint: #0f0f0f;
   --rnd-accent: #e8622a;
-  --rnd-accent-fg: #ffffff;
-  --rnd-surface-1: color-mix(in srgb, var(--rnd-tint) 95%, #000);
-  --rnd-surface-2: color-mix(in srgb, var(--rnd-tint) 88%, #000);
-  --rnd-border: color-mix(in srgb, var(--rnd-tint) 60%, #fff 40%);
-  --rnd-text: color-mix(in srgb, var(--rnd-tint) 5%, #fff 95%);
-  --rnd-text-muted: color-mix(in srgb, var(--rnd-tint) 40%, #fff 60%);
+  --rnd-accent-fg: #fff;
+  --rnd-accent-dim: color-mix(in srgb, var(--rnd-accent) 12%, transparent);
+
   --rnd-card-bg: color-mix(in srgb, var(--rnd-tint) 4%, #fff);
-  --rnd-card-border: color-mix(in srgb, var(--rnd-tint) 18%, #fff);
-  --rnd-card-text: color-mix(in srgb, var(--rnd-tint) 85%, #000);
-  --rnd-card-muted: color-mix(in srgb, var(--rnd-tint) 45%, #fff);
+  --rnd-surface-2: color-mix(in srgb, var(--rnd-tint) 8%, #fff);
+  --rnd-border: color-mix(in srgb, var(--rnd-tint) 18%, #fff);
+  --rnd-text: color-mix(in srgb, var(--rnd-tint) 85%, #000);
+  --rnd-text-muted: color-mix(in srgb, var(--rnd-tint) 45%, #fff);
 }
 
-.rnd-event-page .rnd-card {
-  background: var(--rnd-card-bg);
-  border-color: var(--rnd-card-border);
-  color: var(--rnd-card-text);
-}
-.rnd-event-page .rnd-card__trigger {
-  color: inherit;
-}
-.rnd-event-page .rnd-card__icon {
-  color: var(--rnd-accent);
-}
-.rnd-event-page .rnd-card__chevron {
-  color: var(--rnd-card-muted);
-}
-.rnd-event-page .rnd-card__body {
-  border-color: var(--rnd-card-border);
-}
-.rnd-event-page .rnd-card__text,
-.rnd-event-page .rnd-card__detail-value,
-.rnd-event-page .rnd-card__tier-label {
-  color: var(--rnd-card-text);
-}
-.rnd-event-page .rnd-card__detail-label,
-.rnd-event-page .rnd-card__tier-includes,
-.rnd-event-page .rnd-card__tier-note {
-  color: var(--rnd-card-muted);
-}
-.rnd-event-page .rnd-card__tier-price {
-  color: var(--rnd-accent);
-}
-.rnd-event-page .rnd-card__link {
-  color: var(--rnd-tint);
-  text-decoration-color: var(--rnd-accent);
+.rnd-event-hero {
+  --rnd-bg: #0f0f0f;
+  --rnd-surface: #1a1a1a;
+  --rnd-surface-2: #222;
+  --rnd-border: #2a2a2a;
+  --rnd-text: #fbf5f3;
+  --rnd-text-muted: #777;
 }
 
 .rnd-cards {

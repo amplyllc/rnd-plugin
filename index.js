@@ -1,4 +1,4 @@
-// roundpit-rnd: Roundpit events for Eleventy 3. Setup and options: README.md.
+// rnd-plugin: Roundpit events for Eleventy 3. Setup and options: README.md.
 const path = require('node:path')
 const loadEvents = require('./data.js')
 const html = require('./html.js')

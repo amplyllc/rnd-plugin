@@ -1,15 +1,15 @@
-# roundpit-rnd
+# rnd-plugin
 
 Roundpit events for Eleventy 3 sites: a page per event, live event lists, and event data for
 your own templates.
 
 ## Install
 
-    npm install github:YOUR_GITHUB/roundpit-rnd#v1.0.0
+    npm install github:YOUR_GITHUB/rnd-plugin#v1.0.0
 
 Eleventy config:
 
-    eleventyConfig.addPlugin(require("roundpit-rnd"), {
+    eleventyConfig.addPlugin(require("rnd-plugin"), {
       workspaces: ["willow-rock-cicero"],
       theme: { tint: "#003874", accent: "#7dc243", accentFg: "#0f0f0f" },
     })
@@ -71,7 +71,7 @@ listen for it. Any element with `data-rnd-over` is removed once that time passes
     npm install
     npm run example                       # example site at http://localhost:8080
 
-Against a real site: `npm install ../roundpit-rnd` in the site, test, then tag a release here
+Against a real site: `npm install ../rnd-plugin` in the site, test, then tag a release here
 and point the site back at the tag.
 
 ## Versions

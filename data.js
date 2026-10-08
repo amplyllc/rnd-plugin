@@ -62,7 +62,7 @@ module.exports = async function loadEvents(cfg) {
     if (items === null) {
       if (cfg.strict) throw new Error(`[rnd] ${ws}: API unreachable, STRICT_API=1 — aborting.`)
       console.warn(`[rnd] ${ws}: API unreachable — no pages for this workspace`)
-      return []
+      return null
     }
     const today = dayKey(Date.now())
     return items
@@ -96,10 +96,18 @@ module.exports = async function loadEvents(cfg) {
     })
   }
 
-  const batches = await Promise.all([
+  const results = await Promise.all([
     ...cfg.workspaces.map(fromWorkspace),
     ...cfg.events.map(fromEventId),
   ])
+
+  // An API that answers for no workspace at all is an outage, not an empty calendar: fail so the
+  // host keeps serving the last good deploy instead of publishing a site with no events.
+  const wsResults = results.slice(0, cfg.workspaces.length)
+  if (wsResults.length && wsResults.every(r => r === null)) {
+    throw new Error(`[rnd] API unreachable for every workspace (${cfg.api}) — aborting to keep the last good deploy.`)
+  }
+  const batches = results.map(r => r || [])
 
   const ids = new Set()
   const taken = new Set()

@@ -19,7 +19,7 @@
     id: '-', updated_at: '-', overAt: '-', starts_at: '-', title: '-', summary: '-',
     summaryShort: '-', purpose: '-', purposeKey: '-', locationName: '-', locationLabel: '-',
     address: '-', tags: '-', dow: '-', month: '-', day: '-', time: '-', dateLabel: '-',
-    label: '-', href: '-', ticketUrl: '-'
+    label: '-', href: '-', ticketUrl: '-', image: '-', imageAlt: '-'
   }
 
   function isEvent(i) {
@@ -58,6 +58,7 @@
     var meta = item.metadata || {}
     var loc = item.location || {}
     var purpose = meta.purpose || ''
+    var media = (item.media && item.media[0]) || {}
     var dow = date({ weekday: 'long' })
     var month = date({ month: 'short' })
     var day = date({ day: 'numeric' })
@@ -83,7 +84,11 @@
       dateLabel: dow + ', ' + month + ' ' + day,
       label: (item.title || '') + ', ' + dow + ', ' + month + ' ' + day,
       href: (pages && pages[item.id]) || item.url || '#',
-      ticketUrl: item.url && !ROUNDPIT_PAGE.test(item.url) ? item.url : ''
+      ticketUrl: item.url && !ROUNDPIT_PAGE.test(item.url) ? item.url : '',
+      // Uploads reuse the same storage path, so the URL alone never changes; the version param
+      // makes browsers and the CDN fetch a replaced image.
+      image: media.url ? media.url + (media.url.indexOf('?') < 0 ? '?' : '&') + 'v=' + encodeURIComponent(item.updated_at || '') : '',
+      imageAlt: media.alt || item.title || ''
     }
   }
 

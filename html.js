@@ -8,13 +8,12 @@ const ICON_PLACE = '<svg class="rnd-info-icon-svg" viewBox="0 0 24 24" fill="non
 const CHEVRON = '<svg class="rnd-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>'
 
 function hero(e) {
-  const image = e.media && e.media[0]
-  const src = image && image.url
+  const src = e.image
   const poster = src ? `
     <div class="rnd-poster-col">
       <div class="rnd-poster">
         <div class="rnd-poster-sheet">
-          <img class="rnd-poster-img" src="${esc(src)}" alt="${esc(image.alt || e.title)}" fetchpriority="high" decoding="async">
+          <img class="rnd-poster-img" src="${esc(src)}" alt="${esc(e.imageAlt)}" data-rnd-attr="src:image;alt:imageAlt" fetchpriority="high" decoding="async">
         </div>
         <div class="rnd-tape rnd-tl"></div>
         <div class="rnd-tape rnd-tr"></div>
@@ -28,7 +27,7 @@ function hero(e) {
         </div>` : ''
 
   return `<section class="rnd-event-hero" data-id="${esc(e.id)}" data-updated-at="${esc(e.updated_at)}">
-  ${src ? `<div class="rnd-hero-bg" aria-hidden="true"><img class="rnd-hero-bg-img" src="${esc(src)}" alt="" decoding="async"></div>` : ''}
+  ${src ? `<div class="rnd-hero-bg" aria-hidden="true"><img class="rnd-hero-bg-img" src="${esc(src)}" alt="" data-rnd-attr="src:image" decoding="async"></div>` : ''}
   <div class="rnd-hero-overlay" aria-hidden="true"></div>
   <div class="rnd-inner${src ? '' : ' rnd-solo'}">${poster}
     <div class="rnd-content">

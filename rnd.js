@@ -132,16 +132,17 @@
   // Every request must succeed before anything renders: one failed workspace would otherwise
   // read as "no events" and wipe its half of every list.
   function load(cfg) {
-    var requests = cfg.workspaces.map(function (ws) {
-      return { query: 'workspace=' + encodeURIComponent(ws) + '&type=event', missingOk: false }
+    var queries = cfg.workspaces.map(function (ws) {
+      return 'workspace=' + encodeURIComponent(ws) + '&type=event'
     }).concat(cfg.events.map(function (id) {
-      return { query: 'event=' + encodeURIComponent(id), missingOk: true }
+      return 'event=' + encodeURIComponent(id)
     }))
-    return Promise.all(requests.map(function (r) {
+    return Promise.all(queries.map(function (query) {
       // No timestamp param: visitors share the edge cache, so origin sees one hit per window.
-      return fetch(cfg.api + '/api/v1/content?' + r.query, { cache: 'no-cache' })
+      return fetch(cfg.api + '/api/v1/content?' + query, { cache: 'no-cache' })
         .then(function (res) {
-          if (res.status === 404 && r.missingOk) return []
+          // Deletions arrive as tombstones (200 + deleted_at). A 404 means this API has never seen
+          // the event (local-only, wrong environment), so it can't vouch for the baked list.
           return res.ok ? res.json() : null
         })
         .catch(function () { return null })

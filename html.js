@@ -98,6 +98,21 @@ function cards(list) {
 </div>`
 }
 
+const ISLAND_BACK = '<svg class="rnd-island__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>'
+const ISLAND_SHARE = '<svg class="rnd-island__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>'
+
+// The site's layout renders this in place of its own header on event pages; content is the
+// site's own extra buttons (a menu toggle), slotted after Share.
+function islandNav(content, backHref) {
+  return `<nav class="rnd-islands" aria-label="Page navigation">
+<a class="rnd-island" href="${esc(backHref || '/')}" aria-label="Back">${ISLAND_BACK}</a>
+<div class="rnd-islands__end">
+<button type="button" class="rnd-island" data-rnd-share aria-label="Share">${ISLAND_SHARE}</button>
+${content || ''}
+</div>
+</nav>`
+}
+
 // extras: the site's include, already rendered, placed inside the themed wrapper.
 function eventPage(e, extras) {
   const style = e.themeStyle ? ` style="${esc(e.themeStyle)}"` : ''
@@ -126,4 +141,4 @@ function scripts(cfg, pages) {
 <script src="${esc(cfg.assetsPath)}/rnd.js" defer></script>`
 }
 
-module.exports = { eventPage, head, scripts }
+module.exports = { eventPage, head, scripts, islandNav }

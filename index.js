@@ -50,6 +50,7 @@ module.exports = function rnd(eleventyConfig, options = {}) {
   eleventyConfig.addPairedShortcode('rndEventPage', (content, event) => html.eventPage(event, content))
   eleventyConfig.addShortcode('rndHead', () => html.head(cfg))
   eleventyConfig.addShortcode('rndScripts', () => html.scripts(cfg, pages))
+  eleventyConfig.addPairedShortcode('rndIslands', (content, backHref) => html.islandNav(content, backHref))
 
   // Relative to the project root: Eleventy's passthrough expects project paths, and this
   // folder may sit in node_modules or, during kit development, next to the site.

@@ -1,6 +1,6 @@
 {
   "name": "rnd-plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Roundpit events for Eleventy 3 sites: one page per event, live event lists, event data.",
   "main": "index.js",
   "files": [

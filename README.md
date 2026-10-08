@@ -41,6 +41,21 @@ the build instead of shipping without pages).
 
 Pages exist only after a build; lists update live. Locally, restart the dev server for new pages.
 
+## Island nav
+
+On event pages, swap your header for floating Back and Share buttons (with a share modal). In the
+header partial:
+
+    {% if event %}
+      {% rndIslands "/events/" %}{% endrndIslands %}
+    {% else %}
+      ...your header...
+    {% endif %}
+
+`event` is set only on the plugin's event pages. The argument is the Back link (default `/`).
+Anything between the tags goes after Share, so a site can slot its own menu toggle; give it
+`class="rnd-island"`, and `class="rnd-island__icon"` on its svg, to match.
+
 ## Data
 
 - `eventPages`: every event with a page, soonest first. Each entry is the API item plus the

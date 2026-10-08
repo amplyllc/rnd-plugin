@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- Add rndIslands shortcode and share modal
+
 ## 1.0.3
 
 - Event images are versioned with `?v=<updated_at>`, so a replaced upload (same storage path)

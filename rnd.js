@@ -197,7 +197,154 @@
     })
   }
 
+  // Browser-only. Built on first use because its links need the live URL, which the build doesn't know.
+  function buildShare(doc, win, root) {
+    function node(tag, cls, text) {
+      var n = doc.createElement(tag)
+      if (cls) n.className = cls
+      if (text) n.textContent = text
+      return n
+    }
+    var enc = encodeURIComponent
+    var channels = [
+      { label: 'Text', href: function (t, u) { return 'sms:?&body=' + enc(t + ' ' + u) } },
+      { label: 'WhatsApp', external: true, href: function (t, u) { return 'https://wa.me/?text=' + enc(t + ' ' + u) } },
+      { label: 'X', external: true, href: function (t, u) { return 'https://twitter.com/intent/tweet?text=' + enc(t) + '&url=' + enc(u) } },
+      { label: 'Facebook', external: true, href: function (t, u) { return 'https://www.facebook.com/sharer/sharer.php?u=' + enc(u) } },
+      { label: 'Email', href: function (t, u) { return 'mailto:?subject=' + enc(t) + '&body=' + enc(u) } }
+    ]
+
+    var layer = node('div', 'rnd-share')
+    var scrim = node('div', 'rnd-share__scrim')
+    scrim.setAttribute('data-rnd-close', '')
+    var panel = node('div', 'rnd-share__panel')
+    panel.setAttribute('role', 'dialog')
+    panel.setAttribute('aria-modal', 'true')
+    panel.setAttribute('aria-labelledby', 'rnd-share-title')
+
+    var head = node('div', 'rnd-share__head')
+    var title = node('p', 'rnd-share__title', 'Share')
+    title.id = 'rnd-share-title'
+    var close = node('button', 'rnd-share__close', '\u00d7')
+    close.type = 'button'
+    close.setAttribute('aria-label', 'Close')
+    close.setAttribute('data-rnd-close', '')
+    head.appendChild(title)
+    head.appendChild(close)
+
+    var row = node('div', 'rnd-share__copy-row')
+    var input = node('input', 'rnd-share__url')
+    input.type = 'text'
+    input.readOnly = true
+    input.setAttribute('aria-label', 'Page link')
+    var copy = node('button', 'rnd-share__copy', 'Copy link')
+    copy.type = 'button'
+    row.appendChild(input)
+    row.appendChild(copy)
+
+    var list = node('div', 'rnd-share__channels')
+    var links = channels.map(function (c) {
+      var a = node('a', 'rnd-share__channel', c.label)
+      if (c.external) { a.target = '_blank'; a.rel = 'noopener noreferrer' }
+      list.appendChild(a)
+      return a
+    })
+
+    var current = { title: '', url: '' }
+    if (win.navigator.share) {
+      var more = node('button', 'rnd-share__channel', 'More\u2026')
+      more.type = 'button'
+      // A dismissed sheet rejects; there is nothing to report either way.
+      more.addEventListener('click', function () {
+        win.navigator.share({ title: current.title, url: current.url }).catch(function () {})
+      })
+      list.appendChild(more)
+    }
+
+    copy.addEventListener('click', function () {
+      var clip = win.navigator.clipboard
+      function done() {
+        copy.textContent = 'Copied'
+        setTimeout(function () { copy.textContent = 'Copy link' }, 2000)
+      }
+      // Without clipboard access, selecting the field lets the person copy by hand.
+      if (clip && clip.writeText) clip.writeText(input.value).then(done, function () { input.select() })
+      else input.select()
+    })
+
+    panel.appendChild(head)
+    panel.appendChild(row)
+    panel.appendChild(list)
+    layer.appendChild(scrim)
+    layer.appendChild(panel)
+    root.appendChild(layer)
+
+    return {
+      layer: layer,
+      panel: panel,
+      fill: function (t, u) {
+        current.title = t
+        current.url = u
+        input.value = u
+        channels.forEach(function (c, i) { links[i].href = c.href(t, u) })
+      }
+    }
+  }
+
+  // Delegated, so the Share island (rendered by the site's layout, outside the event page) needs no wiring.
+  // The modal mounts inside the themed wrapper so it picks up the site's --rnd-* colors.
+  function bindIslands(doc) {
+    var win = doc.defaultView
+    var root = doc.querySelector('[data-rnd-theme-root]') || doc.body
+    var share = null
+    var trigger = null
+    var scrollWas = ''
+
+    function focusables() {
+      return [].slice.call(share.panel.querySelectorAll('a[href], button, input'))
+    }
+
+    function close() {
+      if (!trigger) return
+      share.layer.classList.remove('is-open')
+      doc.body.style.overflow = scrollWas
+      trigger.focus()
+      trigger = null
+    }
+
+    function open(btn) {
+      if (!share) share = buildShare(doc, win, root)
+      share.fill(doc.title, win.location.origin + win.location.pathname)
+      trigger = btn
+      share.layer.classList.add('is-open')
+      scrollWas = doc.body.style.overflow
+      doc.body.style.overflow = 'hidden'
+      focusables()[0].focus()
+    }
+
+    doc.addEventListener('click', function (e) {
+      var hit = e.target.closest && e.target.closest('[data-rnd-share], [data-rnd-close]')
+      if (!hit) return
+      if (hit.hasAttribute('data-rnd-close')) { close(); return }
+      e.preventDefault()
+      open(hit)
+    })
+
+    doc.addEventListener('keydown', function (e) {
+      if (!trigger) return
+      if (e.key === 'Escape') { close(); return }
+      if (e.key !== 'Tab') return
+      var f = focusables()
+      var first = f[0]
+      var last = f[f.length - 1]
+      if (e.shiftKey && doc.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && doc.activeElement === last) { e.preventDefault(); first.focus() }
+    })
+  }
+
   function start(doc) {
+    // First, before the config and early returns: the islands work on any page that renders them.
+    bindIslands(doc)
     var cfg
     try { cfg = JSON.parse(doc.getElementById('rnd-config').textContent) } catch (e) { return }
     cfg.pages = cfg.pages.reduce(function (m, p) { m[p[0]] = p[1]; return m }, {})

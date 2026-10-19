@@ -22,8 +22,8 @@ Netlify: put the site's build hook URL in Roundpit, set `STRICT_API=1` on produc
 
 | Option | Default | |
 |---|---|---|
-| `workspaces` | `[]` | Location slugs; each upcoming event gets a page at `/events/<workspace>/<slug>/` |
-| `events` | `[]` | Ids of location-less events; always built, past or not, at `/events/<slug>/` |
+| `workspaces` | `[]` | Location slugs or usernames; each upcoming event gets a page at `/events/<workspace>/<slug>/`. A username covers every event that person posts, wherever it happens |
+| `events` | `[]` | Deprecated: put the poster's username in `workspaces`. Ids of single events; always built, past or not, at `/events/<slug>/` |
 | `paths` | `{}` | `{ id: "custom/path" }` page URL overrides |
 | `openCards` | `[]` | Card ids rendered open |
 | `ctaLabel` | `"Get tickets"` | Hero button text (shown when the event has a ticket link) |

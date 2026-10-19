@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- `workspaces` accepts a username: every event that person posts, at any location.
+- `events` is deprecated in favor of a username workspace.
+
 ## 1.1.0
 
 - Add rndIslands shortcode and share modal

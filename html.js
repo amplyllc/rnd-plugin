@@ -1,7 +1,10 @@
-// Event page markup as plain functions, so the plugin has no template files for a site to
-// resolve. Every interpolated value goes through esc(); class names match rnd.css.
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ESCAPES[c])
+
+const safeUrl = v => {
+  const s = String(v == null ? '' : v).trim()
+  return /^(https?:\/\/|mailto:|tel:|\/(?!\/)|#)/i.test(s) ? s : ''
+}
 
 const ICON_DATE = '<svg class="rnd-info-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
 const ICON_PLACE = '<svg class="rnd-info-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>'
@@ -65,9 +68,11 @@ function cardItem(item) {
     case 'detail':
       return `<div class="rnd-card__detail"><span class="rnd-card__detail-label">${esc(item.label)}</span><span class="rnd-card__detail-value">${esc(item.value)}</span></div>`
     case 'link': {
-      const external = String(item.url || '').startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : ''
+      const url = safeUrl(item.url)
+      if (!url) return ''
+      const external = url.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : ''
       const download = item.download ? ` download="${esc(item.download)}"` : ''
-      return `<a class="rnd-card__link" href="${esc(item.url)}"${download}${external}>${esc(item.label)}</a>`
+      return `<a class="rnd-card__link" href="${esc(url)}"${download}${external}>${esc(item.label)}</a>`
     }
     case 'image':
       return `<picture class="rnd-card__picture">${item.srcMobile ? `<source srcset="${esc(item.src)}" media="(min-width: 600px)">` : ''}<img class="rnd-card__img" src="${esc(item.srcMobile || item.src)}" alt="${esc(item.alt)}" loading="lazy" decoding="async"></picture>`

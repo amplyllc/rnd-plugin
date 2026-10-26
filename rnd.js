@@ -1,20 +1,19 @@
-// Roundpit kit runtime. One file for build and browser:
-//   Node:    required by data.js, so baked pages and live renders share toView().
-//   Browser: loaded by {% rndScripts %}; removes ended events, re-renders [data-rnd-list]
-//            regions from the API, and patches the event page hero.
 (function (root, factory) {
   var lib = factory()
   if (typeof module === 'object' && module.exports) module.exports = lib
   else if (root.document) lib.start(root.document)
 })(typeof self !== 'undefined' ? self : this, function () {
-  // A link back to Roundpit's own copy of an event isn't a ticket link: our page replaces it.
   var ROUNDPIT_PAGE = /^https?:\/\/(www\.)?roundpit\.com\//i
   var HEX = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i
+  var SAFE_URL = /^(https?:\/\/|mailto:|tel:|\/(?![\/\\])|#)/i
+
+  function safeUrl(v) {
+    var s = String(v == null ? '' : v).trim()
+    return SAFE_URL.test(s) ? s : ''
+  }
   var THEME_VARS = { tint: '--rnd-tint', accent: '--rnd-accent', accentFg: '--rnd-accent-fg' }
-  // ends_at is optional in the API; without it an event counts as over this long after it starts.
   var DEFAULT_LENGTH_MS = 3 * 60 * 60 * 1000
 
-  // Every field non-empty, so a site's card macro emits every optional element for fill().
   var PLACEHOLDER = {
     id: '-', updated_at: '-', overAt: '-', starts_at: '-', title: '-', summary: '-',
     summaryShort: '-', purpose: '-', purposeKey: '-', locationName: '-', locationLabel: '-',
@@ -49,8 +48,6 @@
       .join(';')
   }
 
-  // The one shape every slot reads, baked or live. pages maps baked ids to their URLs; an event
-  // the last build didn't bake links to its API url instead of a page that doesn't exist yet.
   function toView(item, cfg, pages) {
     var tz = cfg.timeZone
     var d = new Date(item.starts_at)
@@ -71,7 +68,6 @@
       summary: item.summary || '',
       summaryShort: truncate(item.summary, 140),
       purpose: purpose,
-      // First word only: site styles key off one-word modifiers (tag-live, ticker-tag--trivia).
       purposeKey: (purpose.toLowerCase().match(/[a-z0-9]+/) || [''])[0],
       locationName: loc.name || '',
       locationLabel: loc.name || 'Location to be announced',
@@ -83,10 +79,8 @@
       time: d.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true }),
       dateLabel: dow + ', ' + month + ' ' + day,
       label: (item.title || '') + ', ' + dow + ', ' + month + ' ' + day,
-      href: (pages && pages[item.id]) || item.url || '#',
-      ticketUrl: item.url && !ROUNDPIT_PAGE.test(item.url) ? item.url : '',
-      // Uploads reuse the same storage path, so the URL alone never changes; the version param
-      // makes browsers and the CDN fetch a replaced image.
+      href: (pages && pages[item.id]) || safeUrl(item.url) || '#',
+      ticketUrl: ROUNDPIT_PAGE.test(safeUrl(item.url)) ? '' : safeUrl(item.url),
       image: media.url ? media.url + (media.url.indexOf('?') < 0 ? '?' : '&') + 'v=' + encodeURIComponent(item.updated_at || '') : '',
       imageAlt: media.alt || item.title || ''
     }
@@ -94,11 +88,6 @@
 
   /* ── browser ── */
 
-  // Slot contract (README.md):
-  //   data-rnd="field"              text
-  //   data-rnd-attr="attr:field;…"  attributes (removed when the field is empty)
-  //   data-rnd-if="field"           element dropped when the field is empty
-  //   data-rnd-mod="prefix-"        class prefix + purposeKey
   function fill(node, v) {
     if (node.hasAttribute('data-rnd-id')) {
       node.setAttribute('data-rnd-id', v.id)
@@ -122,7 +111,6 @@
     })
   }
 
-  // Site scripts (tickers, filters, empty states) listen for this instead of being called.
   function emit(el) {
     el.dispatchEvent(new CustomEvent('rnd:update', { bubbles: true }))
   }
@@ -134,8 +122,6 @@
     })
   }
 
-  // Every request must succeed before anything renders: one failed workspace would otherwise
-  // read as "no events" and wipe its half of every list.
   function load(cfg) {
     var queries = cfg.workspaces.map(function (ws) {
       return 'workspace=' + encodeURIComponent(ws) + '&type=event'
@@ -143,11 +129,8 @@
       return 'event=' + encodeURIComponent(id)
     }))
     return Promise.all(queries.map(function (query) {
-      // No timestamp param: visitors share the edge cache, so origin sees one hit per window.
       return fetch(cfg.api + '/api/v1/content?' + query, { cache: 'no-cache' })
         .then(function (res) {
-          // Deletions arrive as tombstones (200 + deleted_at). A 404 means this API has never seen
-          // the event (local-only, wrong environment), so it can't vouch for the baked list.
           return res.ok ? res.json() : null
         })
         .catch(function () { return null })
@@ -169,7 +152,6 @@
     var next = items.filter(function (i) { return Date.parse(overAt(i)) > now }).slice(0, limit)
     var current = [].slice.call(list.querySelectorAll(':scope > [data-rnd-id]'))
 
-    // Unchanged list: leave the DOM alone so tickers and filters keep their state.
     var before = current.map(function (el) { return el.getAttribute('data-rnd-id') + '@' + el.getAttribute('data-rnd-updated') })
     var after = next.map(function (i) { return i.id + '@' + (i.updated_at || '') })
     if (before.join() === after.join()) return
@@ -186,7 +168,6 @@
   function patchHero(hero, items, cfg) {
     var id = hero.getAttribute('data-id')
     var item = items.filter(function (i) { return i.id === id })[0]
-    // Not in the live list (ended, unpublished): the baked page stands until the next build.
     if (!item || item.updated_at === hero.getAttribute('data-updated-at')) return
     fill(hero, toView(item, cfg, cfg.pages))
     var theme = item.metadata && item.metadata.theme
@@ -197,7 +178,6 @@
     })
   }
 
-  // Browser-only. Built on first use because its links need the live URL, which the build doesn't know.
   function buildShare(doc, win, root) {
     function node(tag, cls, text) {
       var n = doc.createElement(tag)
@@ -254,7 +234,6 @@
     if (win.navigator.share) {
       var more = node('button', 'rnd-share__channel', 'More\u2026')
       more.type = 'button'
-      // A dismissed sheet rejects; there is nothing to report either way.
       more.addEventListener('click', function () {
         win.navigator.share({ title: current.title, url: current.url }).catch(function () {})
       })
@@ -267,7 +246,6 @@
         copy.textContent = 'Copied'
         setTimeout(function () { copy.textContent = 'Copy link' }, 2000)
       }
-      // Without clipboard access, selecting the field lets the person copy by hand.
       if (clip && clip.writeText) clip.writeText(input.value).then(done, function () { input.select() })
       else input.select()
     })
@@ -291,8 +269,6 @@
     }
   }
 
-  // Delegated, so the Share island (rendered by the site's layout, outside the event page) needs no wiring.
-  // The modal mounts inside the themed wrapper so it picks up the site's --rnd-* colors.
   function bindIslands(doc) {
     var win = doc.defaultView
     var root = doc.querySelector('[data-rnd-theme-root]') || doc.body
@@ -343,7 +319,6 @@
   }
 
   function start(doc) {
-    // First, before the config and early returns: the islands work on any page that renders them.
     bindIslands(doc)
     var cfg
     try { cfg = JSON.parse(doc.getElementById('rnd-config').textContent) } catch (e) { return }
@@ -369,6 +344,7 @@
     overAt: overAt,
     themeStyle: themeStyle,
     toView: toView,
+    safeUrl: safeUrl,
     start: start
   }
 })

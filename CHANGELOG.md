@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+- Every link the kit writes is scheme-checked by one `safeUrl` in `rnd.js`: info-section card
+  links, event `href` and `ticketUrl`, baked and live. Anything other than http(s), mailto, tel
+  or a same-site path renders without a link.
+
 ## 1.2.0
 
 - `workspaces` accepts a username: every event that person posts, at any location.

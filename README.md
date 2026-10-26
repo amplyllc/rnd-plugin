@@ -94,3 +94,25 @@ and point the site back at the tag.
 Tags follow semver: patch = fix, minor = new feature, major = sites must change their own code.
 Each site pins a tag, so an update reaches a site only when that site installs it.
 See CHANGELOG.md.
+
+## Releasing
+
+Every change a site should get ships as a tagged release, from a clean `main`:
+
+1. The change, plus any new runtime file added to `files` in `package.json` (a site only gets
+   what `files` lists).
+2. `version` in `package.json` bumped by the rules above, and a `## X.Y.Z` entry at the top of
+   `CHANGELOG.md` saying what changed for sites.
+3. `npm install` (syncs `package-lock.json`), `npm run example`, and `npm pack --dry-run` (the
+   file list a site will install).
+4. One commit, an annotated tag on that commit, both pushed:
+
+       git add <changed files>
+       git commit -m "X.Y.Z: <summary>"
+       git tag -a vX.Y.Z -m "vX.Y.Z"
+       git push origin main vX.Y.Z
+
+5. In each site: `npm install github:amplyllc/rnd-plugin#vX.Y.Z`, build, then commit
+   `package.json` and `package-lock.json`.
+
+Never move or reuse a tag. A mistake ships as the next patch.

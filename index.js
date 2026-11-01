@@ -1,6 +1,6 @@
-// rnd-plugin: Roundpit events for Eleventy 3. Setup and options: README.md.
 const path = require('node:path')
 const loadEvents = require('./data.js')
+const { loadSite } = require('./data.js')
 const html = require('./html.js')
 const kit = require('./rnd.js')
 
@@ -26,7 +26,6 @@ module.exports = function rnd(eleventyConfig, options = {}) {
   cfg.api = cfg.api.replace(/\/+$/, '')
   const assets = cfg.assetsPath.replace(/^\/+|\/+$/g, '')
 
-  // Filled by the eventPages data function, which Eleventy runs before any template renders.
   let pages = []
 
   eleventyConfig.addGlobalData('rnd', { placeholder: kit.PLACEHOLDER, timeZone: cfg.timeZone })
@@ -34,6 +33,13 @@ module.exports = function rnd(eleventyConfig, options = {}) {
     pages = await loadEvents(cfg)
     return pages
   })
+
+  let site = { page: null, hero: null, announcement: null, pageCards: [] }
+  eleventyConfig.addGlobalData('rndSite', async () => {
+    site = await loadSite(cfg)
+    return site
+  })
+  eleventyConfig.addShortcode('rndPageCards', () => (site.pageCards.length ? html.cards(site.pageCards) : ''))
 
   const extras = cfg.extras ? `{% include ${JSON.stringify(cfg.extras)} %}` : ''
   eleventyConfig.addTemplate('rnd-event-pages.njk', `{% rndEventPage event %}${extras}{% endrndEventPage %}`, {
@@ -52,8 +58,6 @@ module.exports = function rnd(eleventyConfig, options = {}) {
   eleventyConfig.addShortcode('rndScripts', () => html.scripts(cfg, pages))
   eleventyConfig.addPairedShortcode('rndIslands', (content, backHref) => html.islandNav(content, backHref))
 
-  // Relative to the project root: Eleventy's passthrough expects project paths, and this
-  // folder may sit in node_modules or, during kit development, next to the site.
   const rel = file => path.relative(process.cwd(), path.join(__dirname, file))
   eleventyConfig.addPassthroughCopy({
     [rel('rnd.js')]: `${assets}/rnd.js`,

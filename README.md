@@ -81,6 +81,37 @@ In the card macro:
 After any change rnd.js fires a bubbling `rnd:update` event; tickers, filters and empty states
 listen for it. Any element with `data-rnd-over` is removed once that time passes.
 
+## Site data
+
+- `rndSite.page`: the workspace's `profile` (a username) or `venue` (a location slug) item, or
+  `null` when the user's page is private. Fields in `rndSite.page.metadata`: `name`, `address`
+  (joined, venues only), `city`, `state`, `zip`, `phone`, `email`, `website`, `hours`, `social`
+  (`{ platform: url }`), `logo`, `cover`, `brand_color`, `cards`.
+- `rndSite.hero`, `rndSite.announcement`: the site's hero and banner (`title`, `summary`, `url`,
+  `starts_at`, `ends_at`), or `null`. A hero has no image of its own; use `rndSite.page.metadata.cover`.
+- `{% rndPageCards %}`: the page's info sections (Sponsors, About…), same markup as event pages.
+
+With several workspaces, the first one that returns an item wins.
+
+## API contract
+
+`GET /api/v1/content?workspace={username or location slug}` (optional `&type=a,b`). Public,
+cached 60 s at the edge, no keys. Always fetch the whole workspace; there is no `since`.
+
+| type | when | notes |
+|---|---|---|
+| `profile` / `venue` | first item | page facts above; same field names on both |
+| `hero`, `announcement` | published only | |
+| `event` | upcoming and ongoing | the user's own events (username) or events at the venue (slug); `metadata.cards` are the event's info sections |
+
+- A regular (repeating) event is one item per upcoming date: id `{uuid}:{YYYY-MM-DD}`, slug
+  `{slug}-{YYYY-MM-DD}`, up to its last date, plus a tombstone for the series id so an old series
+  page drops. `paths` overrides keyed by the UUID don't match date items; key them by the date id.
+- A tombstone is `{ id, type, updated_at, deleted_at }`: remove that item.
+- Events at a deactivated venue are left out of the response, so a full build drops them.
+- Unknown workspaces, admin accounts and deactivated users return 404.
+- `GET /api/v1/content?event={uuid}` returns one event (all its date items for a regular event).
+
 ## Developing the kit
 
     npm install

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- `rndSite` data: the workspace's page (`profile` or `venue`), hero and banner, for site headers,
+  footers and About pages.
+- `{% rndPageCards %}` renders the page's info sections with the event-page card markup.
+- README documents the API contract: item types, per-date regular events, tombstones, full fetches.
+
 ## 1.2.1
 
 - Every link the kit writes is scheme-checked by one `safeUrl` in `rnd.js`: info-section card

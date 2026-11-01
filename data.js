@@ -1,17 +1,13 @@
-// Build-time events: GET /api/v1/content → one entry per event page. Shaped by rnd.js toView(),
-// which the browser also runs, so baked pages and live renders agree.
+
 const fs = require('node:fs')
 const path = require('node:path')
 const kit = require('./rnd.js')
 
-// Local cards and fallbacks, for content the API doesn't carry yet. Re-read every build so
-// edits show up under --serve.
 function loadLocal(file) {
   if (!file) return []
   return [].concat(JSON.parse(fs.readFileSync(path.resolve(file), 'utf8')))
 }
 
-// Accepts a flat card array or the old tdr.json wrapper [{ eventSlug, cards: [...] }].
 function normalizeCards(cards) {
   if (!Array.isArray(cards)) return []
   if (cards.length && cards[0] && Array.isArray(cards[0].cards)) return cards.flatMap(c => c.cards)
@@ -36,17 +32,14 @@ function jsonLd(i) {
   }).replace(/</g, '\\u003c')
 }
 
-module.exports = async function loadEvents(cfg) {
+async function loadEvents(cfg) {
   const local = loadLocal(cfg.local)
   const dayKey = date => new Date(date).toLocaleDateString('en-CA', { timeZone: cfg.timeZone })
 
-  // null = API unreachable; [] = reachable, nothing there.
   async function fetchItems(query) {
-    // The timestamp skips the 60s edge cache, so a rebuild fired by an edit sees that edit.
     const url = `${cfg.api}/api/v1/content?${query}&t=${Date.now()}`
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
-      // 404 is a real answer (unknown workspace, missing route, unknown event) but never a silent one.
       if (res.status === 404) { console.warn(`[rnd] ${query}: 404 not found`); return [] }
       if (!res.ok) { console.warn(`[rnd] ${query}: HTTP ${res.status}`); return null }
       const items = await res.json()
@@ -74,7 +67,6 @@ module.exports = async function loadEvents(cfg) {
     const fallback = local.filter(b => b && b.id === id)
     const live = await fetchItems(`event=${encodeURIComponent(id)}`)
 
-    // A tombstone means it was deleted on purpose; don't resurrect it from the local file.
     if (live && live.some(i => i && i.deleted_at)) {
       console.warn(`[rnd] ${id}: deleted on API — skipping`)
       return []
@@ -88,7 +80,6 @@ module.exports = async function loadEvents(cfg) {
       return fallback
     }
 
-    // API wins; local cards fill in until the API carries cards for this event.
     return usable.map(item => {
       const has = item.metadata && normalizeCards(item.metadata.cards).length
       if (has || !fallback[0]) return item
@@ -101,8 +92,6 @@ module.exports = async function loadEvents(cfg) {
     ...cfg.events.map(fromEventId),
   ])
 
-  // An API that answers for no workspace at all is an outage, not an empty calendar: fail so the
-  // host keeps serving the last good deploy instead of publishing a site with no events.
   const wsResults = results.slice(0, cfg.workspaces.length)
   if (wsResults.length && wsResults.every(r => r === null)) {
     throw new Error(`[rnd] API unreachable for every workspace (${cfg.api}) — aborting to keep the last good deploy.`)
@@ -137,7 +126,6 @@ module.exports = async function loadEvents(cfg) {
       ...view,
       path,
       cards,
-      // Lists filter on this at build; pages still build for ended events so links never 404.
       upcoming: Date.parse(view.overAt) > Date.now(),
       cta: view.ticketUrl ? { url: view.ticketUrl, label: cfg.ctaLabel } : null,
       themeStyle: kit.themeStyle(cfg.theme, meta.theme),
@@ -145,3 +133,33 @@ module.exports = async function loadEvents(cfg) {
     }
   })
 }
+
+async function loadSite(cfg) {
+  const site = { page: null, hero: null, announcement: null, pageCards: [] }
+  for (const ws of cfg.workspaces) {
+    const url = `${cfg.api}/api/v1/content?workspace=${encodeURIComponent(ws)}&type=profile,venue,hero,announcement&t=${Date.now()}`
+    let items
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+      if (!res.ok) { console.warn(`[rnd] ${ws} site items: HTTP ${res.status}`); continue }
+      items = await res.json()
+    } catch (err) {
+      console.warn(`[rnd] ${ws} site items: fetch failed (${err.message})`)
+      continue
+    }
+    for (const item of Array.isArray(items) ? items : []) {
+      if (!item || item.deleted_at) continue
+      if ((item.type === 'profile' || item.type === 'venue') && !site.page) site.page = item
+      if (item.type === 'hero' && !site.hero) site.hero = item
+      if (item.type === 'announcement' && !site.announcement) site.announcement = item
+    }
+  }
+  if (site.page) {
+    site.pageCards = normalizeCards(site.page.metadata && site.page.metadata.cards)
+      .map(c => ({ ...c, open: cfg.openCards.includes(c.id) }))
+  }
+  return site
+}
+
+module.exports = loadEvents
+module.exports.loadSite = loadSite

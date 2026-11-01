@@ -143,4 +143,4 @@ function scripts(cfg, pages) {
 <script src="${esc(cfg.assetsPath)}/rnd.js" defer></script>`
 }
 
-module.exports = { eventPage, head, scripts, islandNav }
+module.exports = { eventPage, head, scripts, islandNav, cards }

@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.3.0
+## 1.3.1
 
+- The `v1.3.0` tag points at 1.2.1 code; install 1.3.1 instead.
 - `rndSite` data: the workspace's page (`profile` or `venue`), hero and banner, for site headers,
   footers and About pages.
 - `{% rndPageCards %}` renders the page's info sections with the event-page card markup.

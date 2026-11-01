@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+- `prefix` option: the folder for event pages; `""` puts them at the site root.
+- Regular events get one stable URL: the next date at `<prefix>/<slug>/`, later dates at
+  `<prefix>/<slug>/<date>/`, and the next date's dated URL redirects to the stable one.
+  Sites with regular events: their date URLs change from `<slug>-<date>` once.
+- `paths` keyed by an event's UUID now covers every date of a regular event.
+
 ## 1.3.2
 
 - Removes a stray self-dependency from `package.json`. No code change.

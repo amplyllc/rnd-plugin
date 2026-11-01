@@ -4,12 +4,24 @@ const { loadSite } = require('./data.js')
 const html = require('./html.js')
 const kit = require('./rnd.js')
 
+const MOVED = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ event.title }}</title>
+<link rel="canonical" href="/{{ event.path }}/">
+<meta http-equiv="refresh" content="0; url=/{{ event.path }}/">
+</head>
+<body><a href="/{{ event.path }}/">{{ event.title }}</a></body>
+</html>`
+
 const DEFAULTS = {
   api: process.env.ROUNDPIT_API_BASE || 'https://roundpit.com',
   strict: process.env.STRICT_API === '1',
   workspaces: [],
   events: [],
   paths: {},
+  prefix: null,
   openCards: [],
   ctaLabel: 'Get tickets',
   theme: null,
@@ -51,6 +63,13 @@ module.exports = function rnd(eleventyConfig, options = {}) {
       title: data => data.event.title,
       description: data => (data.event.summary || '').slice(0, 155),
     },
+  })
+
+  eleventyConfig.addTemplate('rnd-event-moved.njk', MOVED, {
+    layout: false,
+    eleventyExcludeFromCollections: true,
+    pagination: { data: 'eventPages', size: 1, alias: 'event', before: list => list.filter(e => e.aliasPath) },
+    permalink: data => `/${data.event.aliasPath}/`,
   })
 
   eleventyConfig.addPairedShortcode('rndEventPage', (content, event) => html.eventPage(event, content))

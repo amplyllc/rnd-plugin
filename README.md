@@ -24,7 +24,8 @@ Netlify: put the site's build hook URL in Roundpit, set `STRICT_API=1` on produc
 |---|---|---|
 | `workspaces` | `[]` | Location slugs or usernames; each upcoming event gets a page at `/events/<workspace>/<slug>/`. A username covers every event that person posts, wherever it happens |
 | `events` | `[]` | Deprecated: put the poster's username in `workspaces`. Ids of single events; always built, past or not, at `/events/<slug>/` |
-| `paths` | `{}` | `{ id: "custom/path" }` page URL overrides |
+| `prefix` | `"events/{workspace}"` (`"events"` for `events` ids) | Folder for event pages; `""` puts them at the site root (`/<slug>/`) |
+| `paths` | `{}` | `{ id: "custom/path" }` page URL overrides; an event's UUID covers every date of a regular event |
 | `openCards` | `[]` | Card ids rendered open |
 | `ctaLabel` | `"Get tickets"` | Hero button text (shown when the event has a ticket link) |
 | `theme` | `null` | `{ tint, accent, accentFg }` hex colors |
@@ -106,7 +107,9 @@ cached 60 s at the edge, no keys. Always fetch the whole workspace; there is no 
 
 - A regular (repeating) event is one item per upcoming date: id `{uuid}:{YYYY-MM-DD}`, slug
   `{slug}-{YYYY-MM-DD}`, up to its last date, plus a tombstone for the series id so an old series
-  page drops. `paths` overrides keyed by the UUID don't match date items; key them by the date id.
+  page drops. The plugin builds the next date at `<prefix>/<slug>/` (one stable URL), later dates
+  at `<prefix>/<slug>/<date>/`, and redirects the next date's dated URL to the stable one. The site
+  rebuilds after the daily roll, so the stable URL always shows the next date.
 - A tombstone is `{ id, type, updated_at, deleted_at }`: remove that item.
 - Events at a deactivated venue are left out of the response, so a full build drops them.
 - Unknown workspaces, admin accounts and deactivated users return 404.

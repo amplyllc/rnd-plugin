@@ -25,9 +25,26 @@
     return !!(i && i.type === 'event' && !i.deleted_at && i.slug && i.starts_at)
   }
 
-  function pagePath(item, paths) {
-    if (paths && paths[item.id]) return paths[item.id]
-    return item.workspace ? 'events/' + item.workspace + '/' + item.slug : 'events/' + item.slug
+  var DATE_ID = /^(.+):(\d{4}-\d{2}-\d{2})$/
+
+  function seriesOf(item) {
+    var m = DATE_ID.exec(item.id || '')
+    if (!m) return null
+    var tail = '-' + m[2]
+    var slug = item.slug.slice(-tail.length) === tail ? item.slug.slice(0, -tail.length) : item.slug
+    return { id: m[1], date: m[2], slug: slug }
+  }
+
+  function cleanPath(p) {
+    return String(p).replace(/\/+/g, '/').replace(/^\/|\/$/g, '')
+  }
+
+  function basePath(item, cfg) {
+    var series = seriesOf(item)
+    var own = cfg.paths && cfg.paths[series ? series.id : item.id]
+    if (own) return cleanPath(own)
+    var prefix = cfg.prefix == null ? (item.workspace ? 'events/{workspace}' : 'events') : cfg.prefix
+    return cleanPath(prefix.replace('{workspace}', item.workspace || '') + '/' + (series ? series.slug : item.slug))
   }
 
   function overAt(item) {
@@ -340,7 +357,9 @@
   return {
     PLACEHOLDER: PLACEHOLDER,
     isEvent: isEvent,
-    pagePath: pagePath,
+    seriesOf: seriesOf,
+    cleanPath: cleanPath,
+    basePath: basePath,
     overAt: overAt,
     themeStyle: themeStyle,
     toView: toView,

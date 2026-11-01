@@ -99,32 +99,45 @@ async function loadEvents(cfg) {
   const batches = results.map(r => r || [])
 
   const ids = new Set()
+  const firstDate = new Set()
   const taken = new Set()
   const entries = batches.flat()
     .filter(i => !ids.has(i.id) && ids.add(i.id))
-    .map(item => ({ item, path: kit.pagePath(item, cfg.paths) }))
-    .filter(({ item, path }) => {
-      if (taken.has(path)) {
-        console.warn(`[rnd] /${path}/ already taken — skipping ${item.id}`)
+    .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))
+    .map(item => {
+      const series = kit.seriesOf(item)
+      const own = cfg.paths[item.id]
+      if (own || !series) return { item, path: own ? kit.cleanPath(own) : kit.basePath(item, cfg), alias: null }
+      const base = kit.basePath(item, cfg)
+      const dated = `${base}/${series.date}`
+      if (firstDate.has(series.id)) return { item, path: dated, alias: null }
+      firstDate.add(series.id)
+      return { item, path: base, alias: dated }
+    })
+    .filter(({ item, path, alias }) => {
+      const clash = [path, alias].find(p => p !== null && taken.has(p))
+      if (clash !== undefined) {
+        console.warn(`[rnd] /${clash}/ already taken — skipping ${item.id}`)
         return false
       }
       taken.add(path)
+      if (alias) taken.add(alias)
       return true
     })
-    .sort((a, b) => Date.parse(a.item.starts_at) - Date.parse(b.item.starts_at))
 
   const pages = Object.fromEntries(entries.map(({ item, path }) => [item.id, `/${path}/`]))
   console.log(`[rnd] ${entries.length} event page(s) from ${cfg.workspaces.length} workspace(s), ${cfg.events.length} event id(s) via ${cfg.api}`)
 
-  return entries.map(({ item, path }) => {
+  return entries.map(({ item, path, alias }) => {
     const meta = item.metadata || {}
     const view = kit.toView(item, cfg, pages)
     const cards = normalizeCards(meta.cards).map(c => ({ ...c, open: cfg.openCards.includes(c.id) }))
-    console.log(`[rnd] building /${path}/ (cards=${cards.length})`)
+    console.log(`[rnd] building /${path}/${alias ? ` (also /${alias}/)` : ''} (cards=${cards.length})`)
     return {
       ...item,
       ...view,
       path,
+      aliasPath: alias,
       cards,
       upcoming: Date.parse(view.overAt) > Date.now(),
       cta: view.ticketUrl ? { url: view.ticketUrl, label: cfg.ctaLabel } : null,

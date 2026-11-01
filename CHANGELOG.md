@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2
+
+- Removes a stray self-dependency from `package.json`. No code change.
+
 ## 1.3.1
 
 - The `v1.3.0` tag points at 1.2.1 code; install 1.3.1 instead.

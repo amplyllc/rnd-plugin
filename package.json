@@ -24,8 +24,5 @@
   "devDependencies": {
     "@11ty/eleventy": "^3.1.6"
   },
-  "license": "MIT",
-  "dependencies": {
-    "rnd-plugin": "github:amplyllc/rnd-plugin#v1.3.0"
-  }
+  "license": "MIT"
 }

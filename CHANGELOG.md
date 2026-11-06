@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0
+
+- A workspace is a page slug: a venue or an organization. Usernames no longer work; put the
+  organization's slug in `workspaces` instead.
+- An organization's workspace returns the events it hosts, wherever they happen. A venue's
+  returns events at it and events it hosts elsewhere.
+- The page item's type is `page` (was `profile` / `venue`), with `metadata.kind`.
+- `rndSite.pages`: every workspace's page, keyed by slug. `rndSite.page` is still the first one.
+
 ## 1.4.0
 
 - `prefix` option: the folder for event pages; `""` puts them at the site root.

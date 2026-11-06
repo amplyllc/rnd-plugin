@@ -148,9 +148,9 @@ async function loadEvents(cfg) {
 }
 
 async function loadSite(cfg) {
-  const site = { page: null, hero: null, announcement: null, pageCards: [] }
+  const site = { page: null, pages: {}, hero: null, announcement: null, pageCards: [] }
   for (const ws of cfg.workspaces) {
-    const url = `${cfg.api}/api/v1/content?workspace=${encodeURIComponent(ws)}&type=profile,venue,hero,announcement&t=${Date.now()}`
+    const url = `${cfg.api}/api/v1/content?workspace=${encodeURIComponent(ws)}&type=page,hero,announcement&t=${Date.now()}`
     let items
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
@@ -162,11 +162,12 @@ async function loadSite(cfg) {
     }
     for (const item of Array.isArray(items) ? items : []) {
       if (!item || item.deleted_at) continue
-      if ((item.type === 'profile' || item.type === 'venue') && !site.page) site.page = item
+      if (item.type === 'page' && !site.pages[ws]) site.pages[ws] = item
       if (item.type === 'hero' && !site.hero) site.hero = item
       if (item.type === 'announcement' && !site.announcement) site.announcement = item
     }
   }
+  site.page = site.pages[cfg.workspaces.find(ws => site.pages[ws])] || null
   if (site.page) {
     site.pageCards = normalizeCards(site.page.metadata && site.page.metadata.cards)
       .map(c => ({ ...c, open: cfg.openCards.includes(c.id) }))

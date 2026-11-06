@@ -10,7 +10,7 @@ your own templates.
 Eleventy config:
 
     eleventyConfig.addPlugin(require("rnd-plugin"), {
-      workspaces: ["willow-rock-cicero"],
+      workspaces: ["page-slug"],
       theme: { tint: "#003874", accent: "#7dc243", accentFg: "#0f0f0f" },
     })
 
@@ -22,8 +22,8 @@ Netlify: put the site's build hook URL in Roundpit, set `STRICT_API=1` on produc
 
 | Option | Default | |
 |---|---|---|
-| `workspaces` | `[]` | Location slugs or usernames; each upcoming event gets a page at `/events/<workspace>/<slug>/`. A username covers every event that person posts, wherever it happens |
-| `events` | `[]` | Deprecated: put the poster's username in `workspaces`. Ids of single events; always built, past or not, at `/events/<slug>/` |
+| `workspaces` | `[]` | Page slugs (a venue or an organization); each upcoming event at or hosted by the page gets a page at `/events/<workspace>/<slug>/` |
+| `events` | `[]` | Deprecated: put the page's slug in `workspaces`. Ids of single events; always built, past or not, at `/events/<slug>/` |
 | `prefix` | `"events/{workspace}"` (`"events"` for `events` ids) | Folder for event pages; `""` puts them at the site root (`/<slug>/`) |
 | `paths` | `{}` | `{ id: "custom/path" }` page URL overrides; an event's UUID covers every date of a regular event |
 | `openCards` | `[]` | Card ids rendered open |
@@ -84,26 +84,26 @@ listen for it. Any element with `data-rnd-over` is removed once that time passes
 
 ## Site data
 
-- `rndSite.page`: the workspace's `profile` (a username) or `venue` (a location slug) item, or
-  `null` when the user's page is private. Fields in `rndSite.page.metadata`: `name`, `address`
-  (joined, venues only), `city`, `state`, `zip`, `phone`, `email`, `website`, `hours`, `social`
-  (`{ platform: url }`), `logo`, `cover`, `brand_color`, `cards`.
+- `rndSite.pages`: each workspace's `page` item, keyed by slug (`rndSite.pages["page-slug"]`).
+  `rndSite.page`: the first workspace's page, or `null`. Fields in `.metadata`: `kind` (`venue` or
+  `organization`), `name`, `address` (joined, venues only), `city`, `state`, `zip`, `phone`, `email`,
+  `website`, `hours`, `social` (`{ platform: url }`), `logo`, `cover`, `brand_color`, `cards`.
 - `rndSite.hero`, `rndSite.announcement`: the site's hero and banner (`title`, `summary`, `url`,
   `starts_at`, `ends_at`), or `null`. A hero has no image of its own; use `rndSite.page.metadata.cover`.
 - `{% rndPageCards %}`: the page's info sections (Sponsors, About…), same markup as event pages.
 
-With several workspaces, the first one that returns an item wins.
+With several workspaces, the first one with a hero or banner wins.
 
 ## API contract
 
-`GET /api/v1/content?workspace={username or location slug}` (optional `&type=a,b`). Public,
+`GET /api/v1/content?workspace={page slug}` (optional `&type=a,b`). Public,
 cached 60 s at the edge, no keys. Always fetch the whole workspace; there is no `since`.
 
 | type | when | notes |
 |---|---|---|
-| `profile` / `venue` | first item | page facts above; same field names on both |
+| `page` | first item | page facts above; `metadata.kind` is `venue` or `organization` |
 | `hero`, `announcement` | published only | |
-| `event` | upcoming and ongoing | the user's own events (username) or events at the venue (slug); `metadata.cards` are the event's info sections |
+| `event` | upcoming and ongoing | events at the page or hosted by it; `metadata.cards` are the event's info sections |
 
 - A regular (repeating) event is one item per upcoming date: id `{uuid}:{YYYY-MM-DD}`, slug
   `{slug}-{YYYY-MM-DD}`, up to its last date, plus a tombstone for the series id so an old series
@@ -112,7 +112,7 @@ cached 60 s at the edge, no keys. Always fetch the whole workspace; there is no 
   rebuilds after the daily roll, so the stable URL always shows the next date.
 - A tombstone is `{ id, type, updated_at, deleted_at }`: remove that item.
 - Events at a deactivated venue are left out of the response, so a full build drops them.
-- Unknown workspaces, admin accounts and deactivated users return 404.
+- Unknown or inactive pages return 404.
 - `GET /api/v1/content?event={uuid}` returns one event (all its date items for a regular event).
 
 ## Developing the kit

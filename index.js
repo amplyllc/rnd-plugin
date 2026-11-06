@@ -46,7 +46,7 @@ module.exports = function rnd(eleventyConfig, options = {}) {
     return pages
   })
 
-  let site = { page: null, hero: null, announcement: null, pageCards: [] }
+  let site = { page: null, pages: {}, hero: null, announcement: null, pageCards: [] }
   eleventyConfig.addGlobalData('rndSite', async () => {
     site = await loadSite(cfg)
     return site
